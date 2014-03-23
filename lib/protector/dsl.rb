@@ -6,6 +6,7 @@ module Protector
       # Single DSL evaluation result
       class Box
         attr_accessor :adapter, :access, :destroyable
+        attr_reader :subject, :model
 
         # @param model [Class]              The class of protected entity
         # @param fields [Array<String>]     All the fields the model has
@@ -19,6 +20,7 @@ module Protector
           @access      = {}
           @scope_procs = []
           @destroyable = false
+          @subject = subject
 
           Protector.insecurely do
             blocks.each do |b|

@@ -28,18 +28,33 @@ if defined?(Rails)
     describe "strong_parameters" do
       before(:all) do
         load 'migrations/active_record.rb'
+
+        module FluffyExt
+          extend ActiveSupport::Concern
+
+          included do
+            protect do
+              can :create, :string
+              can :update, :number
+            end
+          end
+        end
+
+        Fluffy.send(:include, FluffyExt)
+
+        module DummyExt
+          extend ActiveSupport::Concern
+
+          included do
+            accepts_nested_attributes_for :fluffies
+          end
+        end
+
+        Dummy.send(:include, FluffyExt, DummyExt)
       end
 
       let(:dummy) do
-        Class.new(ActiveRecord::Base) do
-          def self.model_name; ActiveModel::Name.new(self, nil, "dummy"); end
-          self.table_name = "dummies"
-
-          protect do
-            can :create, :string
-            can :update, :number
-          end
-        end
+        Dummy
       end
 
       def params(*args)
@@ -58,6 +73,13 @@ if defined?(Rails)
 
         expect{ instance.restrict!.assign_attributes params(string: 'test') }.to raise_error
         expect{ instance.restrict!.assign_attributes params(number: 1) }.to_not raise_error
+      end
+
+      it 'creates with nested attributes' do
+        expect{ dummy.restrict!.new params(string: 'test',
+                                           fluffies_attributes: [{string: 'test'}]) }.to_not raise_error
+        expect{ dummy.restrict!.new params(string: 'test',
+                                           fluffies_attributes: [{number: 1}]) }.to raise_error
       end
     end
   end

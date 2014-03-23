@@ -2,12 +2,36 @@ module Protector
   module ActiveRecord
     module Adapters
       module StrongParameters
-        def self.sanitize!(args, is_new, meta)
-          return if args[0].permitted?
-          if is_new
-            args[0] = args[0].permit(*meta.access[:create].keys) if meta.access.include? :create
-          else
-            args[0] = args[0].permit(*meta.access[:update].keys) if meta.access.include? :update
+        class << self
+          def sanitize!(args, is_new, meta)
+            return if args[0].permitted?
+
+            if is_new
+              args[0] = args[0].permit(*with_nested_permissions(meta, :create)) if meta.access.include? :create
+            else
+              args[0] = args[0].permit(*with_nested_permissions(meta, :update)) if meta.access.include? :update
+            end
+          end
+
+          private
+
+          def with_nested_permissions(meta, access_level)
+            if meta.can?(access_level)
+              (meta.access[access_level] || {}).keys + nested_permissions(meta, access_level)
+            else
+              []
+            end
+          end
+
+          def nested_permissions(meta, access_level)
+            meta.model.nested_attributes_options.map do |model_name, perms|
+              nested_model = model_name.to_s.classify.constantize
+
+              attributes = with_nested_permissions(nested_model.protector_meta.evaluate(meta.subject), access_level)
+              attributes << '_destroy' if perms[:allow_destroy]
+
+              {"#{model_name}_attributes".to_sym => attributes}
+            end
           end
         end
 
