@@ -41,20 +41,22 @@ if defined?(Rails)
         end
 
         Fluffy.send(:include, FluffyExt)
-
-        module DummyExt
-          extend ActiveSupport::Concern
-
-          included do
-            accepts_nested_attributes_for :fluffies
-          end
-        end
-
-        Dummy.send(:include, FluffyExt, DummyExt)
       end
 
       let(:dummy) do
-        Dummy
+        Class.new(ActiveRecord::Base) do
+          def self.model_name; ActiveModel::Name.new(self, nil, "dummy"); end
+          def self.name; 'Dummy'; end
+          self.table_name = "dummies"
+
+          has_many :fluffies
+          accepts_nested_attributes_for :fluffies
+
+          protect do
+            can :create, :string
+            can :update, :number
+          end
+        end
       end
 
       def params(*args)
