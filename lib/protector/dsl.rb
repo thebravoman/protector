@@ -116,7 +116,7 @@ module Protector
             @access[action] = {} unless @access[action]
 
             if fields.length == 0
-              @fields.each { |f| @access[action][f.to_s] = nil }
+              (@fields | attribute_aliases(@fields)).each { |f| @access[action][f.to_s] = nil }
             else
               fields.each do |a|
                 if a.is_a?(Array)
@@ -210,6 +210,15 @@ module Protector
         end
 
         private
+
+        def attribute_aliases(fields)
+          return [] unless model.respond_to?(:attribute_aliases)
+
+          fields.flat_map do |f|
+            aliases = model.attribute_aliases.map { |k, v| k if v == f }.compact
+            aliases.present? ? aliases + attribute_aliases(aliases) : []
+          end
+        end
 
         def first_unmodifiable_field(part, fields)
           return (fields.keys.first || '-') unless @access[part]
