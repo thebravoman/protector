@@ -105,22 +105,27 @@ module Protector
         #     can :create, f1: lambda{|x| x == 'olo'}
         #   end
         def can(action, *fields)
-          action = deprecate_actions(action)
-
-          return @destroyable = true if action == :destroy
-
-          @access[action] = {} unless @access[action]
-
-          if fields.length == 0
-            @fields.each { |f| @access[action][f.to_s] = nil }
+          if action.is_a?(Array)
+            action.each { |a| can(a, *fields) }
           else
-            fields.each do |a|
-              if a.is_a?(Array)
-                a.each { |f| @access[action][f.to_s] = nil }
-              elsif a.is_a?(Hash)
-                @access[action].merge!(a.stringify_keys)
-              else
-                @access[action][a.to_s] = nil
+
+            action = deprecate_actions(action)
+
+            return @destroyable = true if action == :destroy
+
+            @access[action] = {} unless @access[action]
+
+            if fields.length == 0
+              @fields.each { |f| @access[action][f.to_s] = nil }
+            else
+              fields.each do |a|
+                if a.is_a?(Array)
+                  a.each { |f| @access[action][f.to_s] = nil }
+                elsif a.is_a?(Hash)
+                  @access[action].merge!(a.stringify_keys)
+                else
+                  @access[action][a.to_s] = nil
+                end
               end
             end
           end
