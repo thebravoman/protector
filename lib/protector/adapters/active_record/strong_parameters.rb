@@ -17,7 +17,7 @@ module Protector
 
           def with_nested_permissions(meta, access_level)
             if meta.can?(access_level)
-              (meta.access[access_level] || {}).keys + nested_permissions(meta, access_level)
+              mapped_permissions(meta.access[access_level] || {}) + nested_permissions(meta, access_level)
             else
               []
             end
@@ -31,6 +31,15 @@ module Protector
               attributes << '_destroy' if perms[:allow_destroy]
 
               {"#{model_name}_attributes".to_sym => attributes}
+            end
+          end
+
+          # Permit nested array of scalar values.
+          #
+          #   can :create, :name, {nicknames: []}, :address
+          def mapped_permissions(access)
+            access.map do |key, value|
+              value.nil? ? key : {key => value}
             end
           end
         end
