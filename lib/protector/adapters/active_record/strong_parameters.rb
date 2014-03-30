@@ -28,7 +28,11 @@ module Protector
               nested_model = model_name.to_s.classify.constantize
 
               attributes = with_nested_permissions(nested_model.protector_meta.evaluate(meta.subject), access_level)
-              attributes << '_destroy' if perms[:allow_destroy]
+
+              if attributes.present?
+                attributes << '_destroy' if perms[:allow_destroy]
+                attributes << 'id'
+              end
 
               {"#{model_name}_attributes".to_sym => attributes}
             end
