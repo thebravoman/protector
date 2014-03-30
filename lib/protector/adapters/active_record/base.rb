@@ -34,19 +34,24 @@ module Protector
             end
           end
 
+          alias :original_read_attribute :read_attribute
+
           def [](name)
             # rubocop:disable ParenthesesAroundCondition
-            if (
-              !protector_subject? ||
-              name == self.class.primary_key ||
-              (self.class.primary_key.is_a?(Array) && self.class.primary_key.include?(name)) ||
-              protector_meta.readable?(name)
-            )
-              read_attribute(name)
+            if !protector_subject? ||
+                name == self.class.primary_key ||
+                (self.class.primary_key.is_a?(Array) && self.class.primary_key.include?(name)) ||
+                protector_meta.readable?(name)
+
+              original_read_attribute(name)
             else
               nil
             end
             # rubocop:enable ParenthesesAroundCondition
+          end
+
+          def read_attribute(name)
+            Protector.config.protect_read_attribute? ? self[name] : original_read_attribute(name)
           end
 
           def association(*params)

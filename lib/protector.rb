@@ -49,6 +49,10 @@ module Protector
       !!paranoid
     end
 
+    def protect_read_attribute?
+      !!protect_rate_attribute
+    end
+
     def strong_parameters?
       strong_parameters.nil? || !!strong_parameters
     end
