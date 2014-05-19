@@ -50,7 +50,7 @@ module Protector
     end
 
     def protect_read_attribute?
-      !!protect_rate_attribute
+      !!protect_read_attribute
     end
 
     def unprotect_singular_scope?
