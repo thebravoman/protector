@@ -228,7 +228,7 @@ module Protector
 
           fields.each do |k, v|
             case x = @access[part][k]
-            when Range
+            when Enumerable
               return k unless x.include?(v)
             when Proc
               return k unless Protector.insecurely{ x.call(v) }
@@ -273,9 +273,19 @@ module Protector
         @blocks ||= []
       end
 
+      def blocks=(blocks)
+        @blocks = blocks
+      end
+
       # Register another protection block
       def <<(block)
         blocks << block
+      end
+
+      def inherit(model, &fields_proc)
+        clone = self.class.new(@adapter, model, &fields_proc)
+        clone.blocks = @blocks.clone unless @blocks.nil?
+        clone
       end
 
       # Calculate protection at the context of subject
@@ -332,6 +342,14 @@ module Protector
         # @yieldparam instance [Object]     Reference to the object being restricted (can be nil)
         def protect(&block)
           protector_meta << block
+        end
+
+        def ensure_protector_meta!(adapter, &column_names)
+          @protector_meta ||= if superclass && superclass.respond_to?(:protector_meta)
+            superclass.protector_meta.inherit(self, &column_names)
+          else
+            Protector::DSL::Meta.new(adapter, self, &column_names)
+          end
         end
       end
     end
