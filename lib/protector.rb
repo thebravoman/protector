@@ -53,6 +53,10 @@ module Protector
       !!protect_rate_attribute
     end
 
+    def unprotect_singular_scope?
+      !!unprotect_singular_scope
+    end
+
     def strong_parameters?
       strong_parameters.nil? || !!strong_parameters
     end
