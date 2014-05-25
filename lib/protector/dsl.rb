@@ -211,13 +211,11 @@ module Protector
 
         private
 
-        def attribute_aliases(fields)
+        def attribute_aliases(fields = [])
           return [] unless model.respond_to?(:attribute_aliases)
 
-          fields.flat_map do |f|
-            aliases = model.attribute_aliases.map { |k, v| k if v == f }.compact
-            aliases.present? ? aliases + attribute_aliases(aliases) : []
-          end
+          aliases = model.attribute_aliases.flat_map{|k, v| k if fields.include?(v)}.compact
+          aliases.present? ? aliases + attribute_aliases(aliases) : []
         end
 
         def first_unmodifiable_field(part, fields)
