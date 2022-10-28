@@ -1,6 +1,7 @@
 appraise "AR_4.2" do
   gem "activerecord", "4.2.11", require: "active_record"
   gem "activerecord-jdbcsqlite3-adapter", platform: :jruby, github: "jruby/activerecord-jdbc-adapter"
+  gem "bigdecimal", "~> 1.4"
 end
 
 # appraise "AR_edge" do
