@@ -15,15 +15,18 @@ module Protector
       def self.activate!
         return false unless defined?(::ActiveRecord)
 
-        ::ActiveRecord::Base.send :include, Protector::Adapters::ActiveRecord::Base
-        ::ActiveRecord::Base.send :include, Protector::Adapters::ActiveRecord::Validations
-        ::ActiveRecord::Relation.send :include, Protector::Adapters::ActiveRecord::Relation
-        ::ActiveRecord::Associations::SingularAssociation.send :include, Protector::Adapters::ActiveRecord::Association
-        ::ActiveRecord::Associations::SingularAssociation.send :include, Protector::Adapters::ActiveRecord::SingularAssociation
-        ::ActiveRecord::Associations::CollectionAssociation.send :include, Protector::Adapters::ActiveRecord::Association
-        ::ActiveRecord::Associations::Preloader.send :include, Protector::Adapters::ActiveRecord::Preloader
-        ::ActiveRecord::Associations::Preloader::Association.send :include, Protector::Adapters::ActiveRecord::Preloader::Association
-        ::ActiveRecord::Associations::CollectionProxy.send :include, Protector::Adapters::ActiveRecord::CollectionProxy
+        ActiveSupport.on_load(:active_record) do
+          ::ActiveRecord::Base.send :include, Protector::Adapters::ActiveRecord::Base
+          ::ActiveRecord::Base.send :include, Protector::Adapters::ActiveRecord::Validations
+          ::ActiveRecord::Relation.send :include, Protector::Adapters::ActiveRecord::Relation
+          ::ActiveRecord::Associations::SingularAssociation.send :include, Protector::Adapters::ActiveRecord::Association
+          ::ActiveRecord::Associations::SingularAssociation.send :include, Protector::Adapters::ActiveRecord::SingularAssociation
+          ::ActiveRecord::Associations::CollectionAssociation.send :include, Protector::Adapters::ActiveRecord::Association
+          ::ActiveRecord::Associations::Preloader.send :include, Protector::Adapters::ActiveRecord::Preloader
+          ::ActiveRecord::Associations::Preloader::Association.send :include, Protector::Adapters::ActiveRecord::Preloader::Association
+          ::ActiveRecord::Associations::CollectionProxy.send :include, Protector::Adapters::ActiveRecord::CollectionProxy
+        end
+
       end
 
       def self.modern?
