@@ -69,14 +69,12 @@ module Protector
           end
 
           # Wraps every `.field` method with a check against {Protector::DSL::Meta::Box#readable?}
-          def define_method_attribute(name)
+          def define_method_attribute(name, owner: )
             super
 
             # Show some <3 to composite primary keys
             unless primary_key == name || Array(primary_key).include?(name)
               generated_attribute_methods.module_eval <<-STR, __FILE__, __LINE__ + 1
-                alias_method #{"#{name}_unprotected".inspect}, #{name.inspect}
-
                 def #{name}
                   if !protector_subject? || protector_meta.readable?(#{name.inspect})
                     #{name}_unprotected
@@ -84,6 +82,8 @@ module Protector
                     nil
                   end
                 end
+
+                alias_method #{"#{name}_unprotected".inspect}, #{name.inspect}
               STR
             end
           end
