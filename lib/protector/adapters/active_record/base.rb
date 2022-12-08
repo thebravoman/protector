@@ -74,17 +74,16 @@ module Protector
 
             # Show some <3 to composite primary keys
             unless primary_key == name || Array(primary_key).include?(name)
-              generated_attribute_methods.module_eval <<-STR, __FILE__, __LINE__ + 1
-                def #{name}
-                  if !protector_subject? || protector_meta.readable?(#{name.inspect})
-                    #{name}_unprotected
-                  else
-                    nil
-                  end
-                end
-
-                alias_method #{"#{name}_unprotected".inspect}, #{name.inspect}
-              STR
+              # This follows the way rails generates methods in https://github.com/rails/rails/pull/39098
+              owner <<
+                "alias_method #{"#{name}_unprotected".inspect}, #{name.inspect}" <<
+                "def #{name}" <<
+                "  if !protector_subject? || protector_meta.readable?(#{name.inspect})" <<
+                "    #{name}_unprotected" <<
+                "  else" <<
+                "    nil" <<
+                "  end" <<
+                "end"
             end
           end
         end
