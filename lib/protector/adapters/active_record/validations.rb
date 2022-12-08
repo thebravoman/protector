@@ -10,7 +10,7 @@ module Protector
             field  = protector_meta.send(method, protector_changed)
 
             if field
-              errors[:base] << I18n.t('protector.invalid', field: field)
+              errors.add(:base, message: I18n.t('protector.invalid', field: field))
               state = false
             end
 
