@@ -74,16 +74,25 @@ module Protector
 
             # Show some <3 to composite primary keys
             unless primary_key == name || Array(primary_key).include?(name)
-              # This follows the way rails generates methods in https://github.com/rails/rails/pull/39098
-              owner <<
-                "alias_method #{"#{name}_unprotected".inspect}, #{name.inspect}" <<
-                "def #{name}" <<
-                "  if !protector_subject? || protector_meta.readable?(#{name.inspect})" <<
-                "    #{name}_unprotected" <<
-                "  else" <<
-                "    nil" <<
-                "  end" <<
-                "end"
+              # This follows the way rails generates the active record methods in version 7.0.4
+              # https://github.com/rails/rails/blob/f6a8cb42d8a61753efa658c809c5e1673426eb10/activerecord/lib/active_record/attribute_methods/read.rb
+              # The api for owner is not public. We know.
+              # There seems to be no public API for this.
+              ActiveModel::AttributeMethods::AttrNames.define_attribute_accessor_method(
+                owner, name
+              ) do |temp_method_name, attr_name_expr|
+                owner.define_cached_method(name, as: temp_method_name, namespace: :active_record) do |batch|
+                  batch <<
+                    "alias_method #{"#{name}_unprotected".inspect}, #{name.inspect}" <<
+                    "def #{name}" <<
+                    "  if !protector_subject? || protector_meta.readable?(#{name.inspect})" <<
+                    "    #{name}_unprotected" <<
+                    "  else" <<
+                    "    nil" <<
+                    "  end" <<
+                    "end"
+                end
+              end
             end
           end
         end
