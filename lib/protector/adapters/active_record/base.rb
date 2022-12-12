@@ -70,11 +70,10 @@ module Protector
 
           # Wraps every `.field` method with a check against {Protector::DSL::Meta::Box#readable?}
           def define_method_attribute(name, owner: )
-            super
 
-            # Show some <3 to composite primary keys
-            unless primary_key == name || Array(primary_key).include?(name)
-              # This follows the way rails generates the active record methods in version 7.0.4
+            if primary_key == name || Array(primary_key).include?(name)
+              # this is the super implemenation of lib/active_record/attribute_methods/read.rb
+              # as of Rails 7.0.4
               # https://github.com/rails/rails/blob/f6a8cb42d8a61753efa658c809c5e1673426eb10/activerecord/lib/active_record/attribute_methods/read.rb
               # The api for owner is not public. We know.
               # There seems to be no public API for this.
@@ -83,10 +82,21 @@ module Protector
               ) do |temp_method_name, attr_name_expr|
                 owner.define_cached_method(name, as: temp_method_name, namespace: :active_record) do |batch|
                   batch <<
-                    "alias_method #{"#{name}_unprotected".inspect}, #{name.inspect}" <<
-                    "def #{name}" <<
-                    "  if !protector_subject? || protector_meta.readable?(#{name.inspect})" <<
-                    "    #{name}_unprotected" <<
+                    "def #{temp_method_name}" <<
+                    "  _read_attribute(#{attr_name_expr}) { |n| missing_attribute(n, caller) }" <<
+                    "end"
+                end
+              end
+            else
+              # plug in the protector to read only if readable or unprotected.
+              ActiveModel::AttributeMethods::AttrNames.define_attribute_accessor_method(
+                owner, name
+              ) do |temp_method_name, attr_name_expr|
+                owner.define_cached_method(name, as: temp_method_name, namespace: :active_record) do |batch|
+                  batch <<
+                    "def #{temp_method_name}" <<
+                    "  if !protector_subject? || protector_meta.readable?(#{temp_method_name.inspect})" <<
+                    "    _read_attribute(#{attr_name_expr}) { |n| missing_attribute(n, caller) }" <<
                     "  else" <<
                     "    nil" <<
                     "  end" <<
